@@ -31,7 +31,7 @@ Clone the repository:
 
 ```bash
 git clone (https://github.com/agbadevemma/swegz-moralis-project)
-cd moralis-integration-demo
+cd swegz-moralis-project
 npm install
 ```
 
