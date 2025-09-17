@@ -151,9 +151,9 @@ app.post("/webhook", async (req, res) => {
           },
           { upsert: true, new: true }
         );
+        console.log("Webhook TX:", tx.hash, "Confirmed:", tx.confirmed);
       }
     }
-    console.log("Webhook TX:", tx.hash, "Confirmed:", tx.confirmed);
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("Webhook error:", err.message);
