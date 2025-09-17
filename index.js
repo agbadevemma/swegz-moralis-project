@@ -84,7 +84,12 @@ app.get("/balance/:address", async (req, res) => {
       chain: "0xaa36a7",
       address,
     });
-    res.json(response.toJSON());
+    const balanceWei = response.toJSON().balance;
+    const balanceEth = ethers.formatEther(balanceWei);
+    res.json({
+      address,
+      balance: balanceEth,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
