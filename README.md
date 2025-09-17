@@ -30,7 +30,7 @@ Before running this demo, make sure you have:
 Clone the repository:
 
 ```bash
-git clone [https://github.com/your-org/moralis-integration-demo.git](https://github.com/agbadevemma/swegz-moralis-project)
+git clone (https://github.com/agbadevemma/swegz-moralis-project)
 cd moralis-integration-demo
 npm install
 ```
