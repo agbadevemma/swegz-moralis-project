@@ -21,12 +21,25 @@ mongoose
   await Moralis.start({
     apiKey: process.env.MORALIS_API_KEY,
   });
-  console.log("✅ Moralis initialized");
+  const streams = await Moralis.Streams.getAll({ limit: 100 });
+  const existing = streams.result.find((s) => s.tag === "swegz");
+
+  if (!existing) {
+    const response = await Moralis.Streams.add({
+      webhookUrl: "https://swegz-moralis-project.onrender.com/webhook",
+      description: "My first stream",
+      tag: "swegz",
+      chains: ["0xaa36a7"], // Ethereum Sepolia testnet
+      includeNativeTxs: true,
+    });
+
+    console.log("✅ New stream created:", response.toJSON().id);
+  } else {
+    console.log("ℹ️ Stream already exists:", existing.id);
+  }
 })();
 
 // ---------- INIT ETHERS ----------
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // ---------- ROUTES ----------
 
@@ -42,6 +55,10 @@ app.get("/wallet/new", async (req, res) => {
     });
 
     await walletDoc.save();
+    await Moralis.Streams.addAddress({
+      id: process.env.MORALIS_STREAM_ID,
+      address: newWallet.address,
+    });
 
     res.json({
       address: walletDoc.address,
@@ -63,7 +80,7 @@ app.get("/balance/:address", async (req, res) => {
   try {
     const { address } = req.params;
     const response = await Moralis.EvmApi.balance.getNativeBalance({
-      chain: "0xaa36a7", 
+      chain: "0xaa36a7",
       address,
     });
     res.json(response.toJSON());
@@ -75,8 +92,14 @@ app.get("/balance/:address", async (req, res) => {
 // Send transaction (via Ethers)
 app.post("/send", async (req, res) => {
   try {
-    const { to, amount } = req.body;
+    const { fromWallet, to, amount } = req.body;
 
+    const walletDoc = await Wallet.findOne({ address: fromWallet });
+    if (!walletDoc) {
+      return res.status(404).json({ error: "Wallet not found" });
+    }
+    const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+    const wallet = new ethers.Wallet(walletDoc.privateKey, provider);
     const tx = {
       to,
       value: ethers.parseEther(amount.toString()),
@@ -91,11 +114,16 @@ app.post("/send", async (req, res) => {
       from: wallet.address,
       to,
       value: amount.toString(),
-      confirmed: true,
+      confirmed: false,
     });
     await txDoc.save();
 
-    res.json({ hash: txResponse.hash });
+    res.json({
+      hash: txResponse.hash,
+      from: wallet.address,
+      to,
+      amount,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -125,7 +153,7 @@ app.post("/webhook", async (req, res) => {
         );
       }
     }
-
+    console.log("Webhook TX:", tx.hash, "Confirmed:", tx.confirmed);
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("Webhook error:", err.message);
