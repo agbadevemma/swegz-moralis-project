@@ -17,6 +17,8 @@ mongoose
   .catch((err) => console.error("MongoDB error:", err));
 
 // ---------- INIT MORALIS ----------
+
+let streamId = null;
 (async () => {
   await Moralis.start({
     apiKey: process.env.MORALIS_API_KEY,
@@ -32,14 +34,13 @@ mongoose
       chains: ["0xaa36a7"], // Ethereum Sepolia testnet
       includeNativeTxs: true,
     });
-
+    streamId = response.toJSON().id;
     console.log("✅ New stream created:", response.toJSON().id);
   } else {
+    streamId = existing.id;
     console.log("ℹ️ Stream already exists:", existing.id);
   }
 })();
-
-// ---------- INIT ETHERS ----------
 
 // ---------- ROUTES ----------
 
@@ -56,10 +57,10 @@ app.get("/wallet/new", async (req, res) => {
 
     await walletDoc.save();
     await Moralis.Streams.addAddress({
-      id: process.env.MORALIS_STREAM_ID,
+      id: streamId,
       address: newWallet.address,
     });
-
+    console.log("✅ Address added to stream:", newWallet.address);
     res.json({
       address: walletDoc.address,
       privateKey: walletDoc.privateKey,
@@ -149,9 +150,14 @@ app.post("/webhook", async (req, res) => {
             value: ethers.formatEther(tx.value),
             confirmed: webhookData.confirmed,
           },
-          { upsert: true, new: true }
+          { upsert: true, new: true } //it create the record if not found.
         );
-        console.log("Webhook TX:", tx.hash, "Confirmed:", webhookData.confirmed);
+        console.log(
+          "Webhook TX:",
+          tx.hash,
+          "Confirmed:",
+          webhookData.confirmed
+        );
       }
     }
     res.status(200).json({ received: true });
