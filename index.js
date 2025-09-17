@@ -147,11 +147,11 @@ app.post("/webhook", async (req, res) => {
             from: tx.fromAddress,
             to: tx.toAddress,
             value: ethers.formatEther(tx.value),
-            confirmed: tx.confirmed,
+            confirmed: webhookData.confirmed,
           },
           { upsert: true, new: true }
         );
-        console.log("Webhook TX:", tx.hash, "Confirmed:", tx.confirmed);
+        console.log("Webhook TX:", tx.hash, "Confirmed:", webhookData.confirmed);
       }
     }
     res.status(200).json({ received: true });
