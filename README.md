@@ -124,6 +124,73 @@ This is the route Moralis Streams will POST events to. It saves transaction deta
 
 ---
 
+## 🔔 Example Webhook Payload (Moralis Streams)
+
+When a transaction involving one of your monitored addresses occurs, Moralis will `POST` a payload to your `/webhook` endpoint.
+Below is a **sample payload** received from the Ethereum Sepolia testnet (`0xaa36a7`):
+
+```json
+{
+  "confirmed": false,
+  "chainId": "0xaa36a7",
+  "abi": [],
+  "streamId": "f3fb3070-d434-418f-ba72-8a00499449de",
+  "tag": "swegz",
+  "retries": 0,
+  "block": {
+    "number": "9224061",
+    "hash": "0xb7cd75bb54d12fba5594a146ef58d577409bb75d7e1d43217458c1ed5fb5ecae",
+    "timestamp": "1758139848"
+  },
+  "logs": [],
+  "txs": [
+    {
+      "hash": "0xf3054c8594a4f7e7bd28ebddc5e62702210c8eff85788e1d8951f96c473c13d1",
+      "gas": "21000",
+      "gasPrice": "10021141",
+      "nonce": "1",
+      "input": "0x",
+      "transactionIndex": "87",
+      "fromAddress": "0x732147956ce03fb7a12f4512c07e737987b1eec0",
+      "toAddress": "0x616a47cad2364e4e89c5fbe16d45920ad2827ee4",
+      "value": "1000000000000",
+      "type": "2",
+      "v": "0",
+      "r": "74358471754667782923191277907367731927792487906327280857926827866306115179274",
+      "s": "51064069772603168407478459447506174992713400639282124128723190272072178017385",
+      "receiptCumulativeGasUsed": "18374502",
+      "receiptGasUsed": "21000",
+      "receiptContractAddress": null,
+      "receiptRoot": null,
+      "receiptStatus": "1",
+      "triggered_by": [
+        "0x732147956ce03fb7a12f4512c07e737987b1eec0",
+        "0x616a47cad2364e4e89c5fbe16d45920ad2827ee4"
+      ]
+    }
+  ],
+  "txsInternal": [],
+  "erc20Transfers": [],
+  "erc20Approvals": [],
+  "nftTokenApprovals": [],
+  "nftApprovals": {
+    "ERC721": [],
+    "ERC1155": []
+  },
+  "nftTransfers": [],
+  "nativeBalances": []
+}
+```
+
+### ⚡ How It’s Used
+
+* `confirmed`: `false` initially (pending), updated to `true` when block confirmations are complete.
+* `txs`: Contains transaction(s) involving your subscribed address.
+* `fromAddress` / `toAddress`: Useful for recording sender and receiver.
+* `value`: Transaction value in **wei** (convert using `ethers.formatEther`).
+
+---
+
 ## Cost Advantage
 
 * **Tatum**: Charges 20 credits per deposit address, even without activity.
@@ -138,13 +205,3 @@ This saves **thousands of credits monthly**, especially if your application scal
 * [Moralis Docs](https://docs.moralis.io/)
 * [Ethers.js Docs](https://docs.ethers.org/)
 * [MongoDB Docs](https://www.mongodb.com/docs/)
-
----
-
-## License
-
-MIT License. Free to use and modify.
-
----
-
-Do you want me to also add a **section comparing the exact monthly savings** (with an example calculation for, say, 1,000 deposit addresses) inside this README so the client immediately sees the financial benefit?
