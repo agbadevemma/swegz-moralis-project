@@ -37,7 +37,7 @@ app.get("/wallet/new", async (req, res) => {
 
     const walletDoc = new Wallet({
       address: newWallet.address,
-      privateKey: newWallet.privateKey, // ⚠️ store encrypted in production
+      privateKey: newWallet.privateKey,
       mnemonic: newWallet.mnemonic?.phrase,
     });
 
@@ -63,7 +63,7 @@ app.get("/balance/:address", async (req, res) => {
   try {
     const { address } = req.params;
     const response = await Moralis.EvmApi.balance.getNativeBalance({
-      chain: "0xaa36a7", // Ethereum Sepolia testnet
+      chain: "0xaa36a7", 
       address,
     });
     res.json(response.toJSON());
