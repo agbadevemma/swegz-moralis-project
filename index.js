@@ -2,11 +2,19 @@ require("dotenv").config();
 const express = require("express");
 const Moralis = require("moralis").default;
 const { ethers } = require("ethers");
+const mongoose = require("mongoose");
+const { Wallet, Transaction } = require("./model");
 
 const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
+
+// ---------- INIT MONGODB ----------
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("MongoDB error:", err));
 
 // ---------- INIT MORALIS ----------
 (async () => {
@@ -22,15 +30,23 @@ const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
 // ---------- ROUTES ----------
 
-// ---------- NEW: Generate Wallet Address ----------
-app.get("/wallet/new", (req, res) => {
+// Generate Wallet Address & Save
+app.get("/wallet/new", async (req, res) => {
   try {
     const newWallet = ethers.Wallet.createRandom();
 
-    res.json({
+    const walletDoc = new Wallet({
       address: newWallet.address,
-      privateKey: newWallet.privateKey, // ⚠️ return only for dev/testing
+      privateKey: newWallet.privateKey, // ⚠️ store encrypted in production
       mnemonic: newWallet.mnemonic?.phrase,
+    });
+
+    await walletDoc.save();
+
+    res.json({
+      address: walletDoc.address,
+      privateKey: walletDoc.privateKey,
+      mnemonic: walletDoc.mnemonic,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -47,7 +63,7 @@ app.get("/balance/:address", async (req, res) => {
   try {
     const { address } = req.params;
     const response = await Moralis.EvmApi.balance.getNativeBalance({
-      chain:"0xaa36a7", // eth testnet
+      chain: "0xaa36a7", // Ethereum Sepolia testnet
       address,
     });
     res.json(response.toJSON());
@@ -69,6 +85,16 @@ app.post("/send", async (req, res) => {
     const txResponse = await wallet.sendTransaction(tx);
     await txResponse.wait();
 
+    // Save TX in DB
+    const txDoc = new Transaction({
+      hash: txResponse.hash,
+      from: wallet.address,
+      to,
+      value: amount.toString(),
+      confirmed: true,
+    });
+    await txDoc.save();
+
     res.json({ hash: txResponse.hash });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -76,23 +102,30 @@ app.post("/send", async (req, res) => {
 });
 
 // ---------- WEBHOOK ROUTE ----------
-// Moralis will POST here when you register the webhook in the Moralis dashboard
 app.post("/webhook", async (req, res) => {
   try {
     const webhookData = req.body;
 
     console.log("🔔 Webhook received:", JSON.stringify(webhookData, null, 2));
 
-    // Example: check if it's a transaction
     if (webhookData.confirmed && webhookData.txs) {
-      webhookData.txs.forEach((tx) => {
+      for (const tx of webhookData.txs) {
         console.log(`✅ Transaction detected! Hash: ${tx.hash}`);
-        console.log(`From: ${tx.fromAddress} To: ${tx.toAddress}`);
-        console.log(`Value: ${ethers.formatEther(tx.value)} ETH`);
-      });
+
+        // Save TX in DB
+        await Transaction.findOneAndUpdate(
+          { hash: tx.hash },
+          {
+            from: tx.fromAddress,
+            to: tx.toAddress,
+            value: ethers.formatEther(tx.value),
+            confirmed: tx.confirmed,
+          },
+          { upsert: true, new: true }
+        );
+      }
     }
 
-    // Always respond quickly
     res.status(200).json({ received: true });
   } catch (err) {
     console.error("Webhook error:", err.message);
