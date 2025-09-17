@@ -1,7 +1,3 @@
-Got it ✅ — here’s a clean **`README.md`** you can drop into your repo so your client’s developers can follow along easily:
-
----
-
 # Moralis Integration Demo
 
 This repository demonstrates how to integrate **Moralis Streams API** with an Express + MongoDB backend to track **incoming blockchain transactions** in real time.
@@ -34,7 +30,7 @@ Before running this demo, make sure you have:
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-org/moralis-integration-demo.git
+git clone [https://github.com/your-org/moralis-integration-demo.git](https://github.com/agbadevemma/swegz-moralis-project)
 cd moralis-integration-demo
 npm install
 ```
@@ -42,11 +38,10 @@ npm install
 Create a `.env` file in the root folder:
 
 ```env
-PORT=3000
-MONGO_URI=mongodb://localhost:27017/moralis_demo
+PORT=9000
 MORALIS_API_KEY=your_moralis_api_key
 RPC_URL=https://sepolia.infura.io/v3/your_project_id
-PRIVATE_KEY=your_testnet_wallet_private_key
+MONGO_URI=mongodb://localhost:27017/moralis_demo
 ```
 
 ---
@@ -59,7 +54,7 @@ Start the development server:
 npm run dev
 ```
 
-Server will run on [http://localhost:3000](http://localhost:3000).
+Server will run on [http://localhost:9000](http://localhost:9000).
 
 ---
 
@@ -95,6 +90,7 @@ Returns the native ETH balance for the given address using Moralis API.
 POST /send
 Content-Type: application/json
 {
+  "fromWallet": "0xSenderAddress",
   "to": "0xRecipientAddress",
   "amount": "0.05"
 }
