@@ -106,21 +106,6 @@ POST /webhook
 
 This is the route Moralis Streams will POST events to. It saves transaction details into MongoDB automatically.
 
----
-
-## MongoDB Schema
-
-```js
-{
-  hash: String,
-  from: String,
-  to: String,
-  value: String,
-  confirmed: Boolean,
-  createdAt: Date,
-  updatedAt: Date
-}
-```
 
 ---
 
